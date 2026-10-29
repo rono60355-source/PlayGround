@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#081013" />
+    <meta name="description" content="Lumenfall — a studybound puzzle adventure. Every act of learning becomes light." />
+    <title>Lumenfall — The Studybound Atlas</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4 52 32 32 60 12 32Z' fill='none' stroke='%238ff5d4' stroke-width='3'/%3E%3Cpath d='M32 18 42 32 32 46 22 32Z' fill='%238ff5d4'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="world" aria-label="Lumenfall 3D world"></canvas>
+
+      <div id="grade" aria-hidden="true"></div>
+
+      <section id="intro" class="screen">
+        <div class="intro-bg"></div>
+        <div class="intro-inner">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 64 64"><path d="M32 3 56 32 32 61 8 32Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M32 16 45 32 32 48 19 32Z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="32" cy="32" r="4" fill="currentColor"/></svg>
+            </span>
+            <p class="eyebrow">The Studybound Atlas</p>
+            <h1>LUMENFALL</h1>
+            <p class="tagline">Every truth you learn becomes light.</p>
+          </div>
+
+          <div class="rite-card" id="planner">
+            <div class="rite-step">
+              <div class="step-head">
+                <span class="step-index">I</span>
+                <div>
+                  <h2>Declare today's study</h2>
+                  <p>The Atlas listens. Your mission will be forged from this subject.</p>
+                </div>
+              </div>
+              <div id="subjectGrid" class="subject-grid" role="group" aria-label="Choose a subject"></div>
+            </div>
+
+            <div class="rite-step">
+              <div class="step-head">
+                <span class="step-index">II</span>
+                <div>
+                  <h2>Name your focus</h2>
+                  <p>Enter the topic you are studying today. The trial will answer to it.</p>
+                </div>
+              </div>
+              <label class="focus-field">
+                <span class="sr-only">Today's study topic</span>
+                <input id="topicInput" type="text" maxlength="72" autocomplete="off" placeholder="e.g. quadratic equations, the Silk Road, photosynthesis" />
+                <span class="focus-glyph" aria-hidden="true">✦</span>
+              </label>
+              <div id="focusHint" class="focus-hint">The archive will weave your focus into today's trials.</div>
+            </div>
+
+            <div class="rite-step compact">
+              <div class="rite-oath">
+                <span class="oath-rune" aria-hidden="true">◇</span>
+                <p><strong>Studying is the only way forward.</strong> Puzzles, gates, charges, and crystal wards answer only to completed study missions.</p>
+              </div>
+            </div>
+
+            <button id="beginBtn" class="primary-btn" type="button" disabled>
+              <span>Enter the Atlas</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            </button>
+            <p class="micro-copy">Touch and keyboard ready · optional tilt look · no music · progress saved on this device</p>
+          </div>
+
+          <div class="intro-footer">
+            <span>Field Notes · I</span>
+            <span class="dot">◇</span>
+            <span>The world remembers what you learn</span>
+          </div>
+        </div>
+      </section>
+
+      <div id="hud" class="hidden" aria-live="polite">
+        <div class="hud-top">
+          <div class="study-card">
+            <span class="hud-label">Today's rite</span>
+            <div class="study-line">
+              <span id="hudSubject" class="subject-pill">—</span>
+              <span id="hudFocus" class="study-focus">—</span>
+            </div>
+            <span id="hudSector" class="hud-sector">Sector I · Verdant Reach</span>
+          </div>
+
+          <div class="objective-card">
+            <span class="hud-label">Attunement</span>
+            <div id="missionDots" class="mission-dots" aria-label="Mission progress"></div>
+            <span id="objectiveText" class="objective-text">Attune the Verdant Beacon</span>
+          </div>
+
+          <div class="hud-actions">
+            <div class="charge-card" id="chargeCard">
+              <span class="hud-label">Aether</span>
+              <div id="chargePips" class="charge-pips" aria-label="Weapon charge"></div>
+              <span id="chargeText" class="charge-text">Dormant</span>
+            </div>
+            <button id="settingsBtn" class="icon-btn" type="button" aria-label="Open settings">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="crosshair" class="crosshair" aria-hidden="true">
+          <span class="ch-ring"></span>
+          <span class="ch-diamond"></span>
+          <span class="ch-tick top"></span><span class="ch-tick bottom"></span><span class="ch-tick left"></span><span class="ch-tick right"></span>
+        </div>
+
+        <div id="targetTag" class="target-tag hidden"><span>△</span><b>Dissonance Echo</b><i>abstract · calmed by resonance</i></div>
+
+        <div id="prompt" class="prompt hidden">
+          <button id="interactBtn" class="prompt-btn" type="button">
+            <span class="key">E</span>
+            <span id="promptLabel">Attune the Beacon</span>
+          </button>
+        </div>
+
+        <div id="toast" class="toast hidden"></div>
+
+        <div id="touchLayer" class="touch-layer hidden">
+          <div id="joystick" class="joystick" aria-label="Movement joystick">
+            <span class="joy-ring"></span>
+            <span id="joyThumb" class="joy-thumb"></span>
+            <span class="joy-label">MOVE</span>
+          </div>
+          <div class="touch-actions">
+            <button id="fireBtn" class="round-btn fire-btn" type="button" aria-label="Fire resonance">
+              <span class="fire-core"></span>
+              <span class="fire-label">FIRE</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="hint-strip" id="hintStrip">
+          <span id="hintText">Follow the path to the beacon. Study missions are the only key.</span>
+        </div>
+      </div>
+
+      <section id="puzzle" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="puzzleTitle">
+        <div class="overlay-veil"></div>
+        <div class="puzzle-panel">
+          <div class="puzzle-head">
+            <span class="puzzle-sigil" id="puzzleSigil">Σ</span>
+            <div>
+              <span class="overlay-kicker" id="puzzleKicker">Study Trial · I</span>
+              <h2 id="puzzleTitle">The Verdant Equation</h2>
+              <p id="puzzleFocus" class="puzzle-focus">Mathematics · quadratic equations</p>
+            </div>
+            <div class="question-count"><span id="questionIndex">01</span><i>/</i><span>03</span></div>
+          </div>
+
+          <div class="puzzle-progress"><span id="puzzleProgressBar"></span></div>
+
+          <div class="question-body">
+            <p id="questionText" class="question-text"></p>
+            <div id="answerList" class="answer-list"></div>
+            <div id="answerNote" class="answer-note hidden"></div>
+          </div>
+
+          <div class="puzzle-foot">
+            <span class="trial-note">Correct answers restore the beacon. Guesswork cannot pass the gate.</span>
+            <button id="continueQuestion" class="primary-btn small" type="button" disabled>
+              <span>Continue</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="reward" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="rewardTitle">
+        <div class="reward-glow"></div>
+        <div class="reward-panel">
+          <span class="reward-rune" aria-hidden="true">◇</span>
+          <p class="overlay-kicker" id="rewardKicker">Beacon restored</p>
+          <h2 id="rewardTitle">The Verdant Beacon Burns Again</h2>
+          <p id="rewardCopy" class="reward-copy">Your study has given form to light. A new reach of the Atlas is awake.</p>
+          <div class="reward-stats">
+            <div><span id="rewardCorrect">9</span><i>truths recalled</i></div>
+            <div><span id="rewardCharge">+2</span><i>aether charges</i></div>
+            <div><span id="rewardNext">Sector II</span><i>newly unlocked</i></div>
+          </div>
+          <button id="rewardBtn" class="primary-btn" type="button">
+            <span>Return to the Atlas</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <section id="settings" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="overlay-veil"></div>
+        <div class="settings-panel">
+          <div class="settings-head">
+            <div>
+              <span class="overlay-kicker">Field instruments</span>
+              <h2 id="settingsTitle">Wayfarer Settings</h2>
+            </div>
+            <button id="closeSettings" class="icon-btn" type="button" aria-label="Close settings">✕</button>
+          </div>
+
+          <div class="setting-row">
+            <div><strong>Look sensitivity</strong><span>Touch drag and mouse look</span></div>
+            <input id="sensitivity" type="range" min="0.5" max="2" step="0.1" value="1" />
+          </div>
+
+          <div class="setting-row">
+            <div><strong>Tilt look</strong><span id="tiltStatus">Use device motion for fine aim</span></div>
+            <button id="tiltBtn" class="toggle" type="button" role="switch" aria-checked="false"><span></span></button>
+          </div>
+
+          <div class="setting-row">
+            <div><strong>Motion comfort</strong><span>Slower look, softer camera sway</span></div>
+            <button id="comfortBtn" class="toggle" type="button" role="switch" aria-checked="true"><span></span></button>
+          </div>
+
+          <div class="settings-help">
+            <p><b>Keyboard</b> WASD move · mouse look · E attune · F fire · Esc settings</p>
+            <p><b>Touch</b> left stick move · drag right to look · buttons to attune and fire</p>
+            <p><b>Study rule</b> Aether charges and new reaches are earned only by completing daily study missions.</p>
+          </div>
+
+          <div class="settings-actions">
+            <button id="travelBtn" class="ghost-btn hidden" type="button">Open waygate map</button>
+            <button id="resetDayBtn" class="ghost-btn danger" type="button">Restart today's rite</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="travel" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="travelTitle">
+        <div class="overlay-veil"></div>
+        <div class="travel-panel">
+          <div class="settings-head">
+            <div>
+              <span class="overlay-kicker">Ancient waygates</span>
+              <h2 id="travelTitle">Choose a reach</h2>
+            </div>
+            <button id="closeTravel" class="icon-btn" type="button" aria-label="Close waygate map">✕</button>
+          </div>
+          <p class="travel-copy">Only reaches restored by today's study can be entered.</p>
+          <div id="travelList" class="travel-list"></div>
+        </div>
+      </section>
+
+      <div id="transition" class="transition hidden"><div class="transition-mark">◇</div><h2 id="transitionTitle">Prism Hollow</h2><p id="transitionSub">Sector II</p></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

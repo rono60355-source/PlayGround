@@ -1,0 +1,28 @@
+{
+  "name": "lumenfall",
+  "version": "1.0.0",
+  "description": "LUMENFALL \u2014 The Studybound Atlas: a browser 3D study-puzzle adventure.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 3002",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 3002"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rono60355-source/PlayGround.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rono60355-source/PlayGround/issues"
+  },
+  "homepage": "https://github.com/rono60355-source/PlayGround#readme",
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.11"
+  },
+  "private": true
+}
