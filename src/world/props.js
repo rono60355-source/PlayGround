@@ -12,7 +12,7 @@ export function createObelisk(w, zone, position, index) {
   group.userData.zone = index
   const stoneTex = makeStoneTexture(index === 1)
   stoneTex.repeat.set(1, 2)
-  const stone = standardMaterial({ map: stoneTex, color: index === 2 ? 0xcfc19b : 0x959986, roughness: 0.9 })
+  const stone = standardMaterial({ map: stoneTex, color: index === 2 ? 0xa8c2df : 0x7e8fab, roughness: 0.9 })
   const accent = new THREE.Color(zone.accent)
   const glow = new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
   const crystalMat = standardMaterial({ color: accent, emissive: accent, emissiveIntensity: 1.25, roughness: 0.2, metalness: 0.1 })
@@ -91,7 +91,7 @@ export function createWaygate(w, zone, position, index) {
   group.position.set(position.x, worldY, position.z)
   group.userData.zone = index
   const stoneTex = makeStoneTexture(index === 1)
-  const stone = standardMaterial({ map: stoneTex, color: index === 2 ? 0xc9bb96 : 0x8f9486, roughness: 0.92 })
+  const stone = standardMaterial({ map: stoneTex, color: index === 2 ? 0xa9c5e5 : 0x788ba6, roughness: 0.92 })
   const gold = new THREE.MeshBasicMaterial({ color: zone.accent, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false })
 
   for (const s of [-1, 1]) {
@@ -124,7 +124,7 @@ export function createWaygate(w, zone, position, index) {
   }
   const portalUniforms = THREE.UniformsUtils.clone(PortalShader.uniforms)
   portalUniforms.uColorA.value = new THREE.Color(zone.accent)
-  portalUniforms.uColorB.value = new THREE.Color(index === 2 ? '#f4cf91' : '#ffffff')
+  portalUniforms.uColorB.value = new THREE.Color(index === 2 ? '#a8c8ff' : '#d8f4ff')
   const portalMat = new THREE.ShaderMaterial({
     uniforms: portalUniforms,
     vertexShader: PortalShader.vertexShader,
@@ -155,8 +155,8 @@ export function spawnMonsters(w, zoneIndex, root) {
     2: [[812, -3], [788, -2], [810, 18], [790, 20]],
   }[zoneIndex]
   const colors = zoneIndex === 0
-    ? ['#7ff5d4', '#b8a4ff', '#f4cf91']
-    : zoneIndex === 1 ? ['#79dcff', '#b18cff', '#ff9ad5'] : ['#ffe0a0', '#b9d8ff', '#ffc38a']
+    ? ['#7fd8ff', '#b6a8ff', '#8fe8ff']
+    : zoneIndex === 1 ? ['#79dcff', '#b18cff', '#7fe0d0'] : ['#b9d8ff', '#8fc8ff', '#d8f0ff']
   positions.forEach(([x, z], i) => {
     const group = new THREE.Group()
     const baseY = zoneHeight(zoneIndex, x, z)

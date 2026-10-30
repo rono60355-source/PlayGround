@@ -14,9 +14,9 @@ export function buildArchive(w) {
   topGeo.rotateX(-Math.PI / 2)
   const pos = topGeo.attributes.position
   const colors = []
-  const cA = new THREE.Color('#b7a882')
-  const cB = new THREE.Color('#cfc09a')
-  const cC = new THREE.Color('#8b8063')
+  const cA = new THREE.Color('#9fb7d8')
+  const cB = new THREE.Color('#c9dcf2')
+  const cC = new THREE.Color('#6f84a8')
   const tmp = new THREE.Color()
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i) + cx, z = pos.getZ(i)
@@ -44,7 +44,7 @@ export function buildArchive(w) {
     upos.setXYZ(i, v.x, v.y, v.z)
   }
   undersideGeo.computeVertexNormals()
-  const underside = new THREE.Mesh(undersideGeo, standardMaterial({ color: 0x4d4e45, roughness: 1, side: THREE.DoubleSide }))
+  const underside = new THREE.Mesh(undersideGeo, standardMaterial({ color: 0x29374f, roughness: 1, side: THREE.DoubleSide }))
   underside.position.set(cx, 56, 0)
   underside.scale.y = 1.0
   root.add(underside)
@@ -52,9 +52,9 @@ export function buildArchive(w) {
   const rand = rng(930)
   const stoneTex = makeStoneTexture(false)
   stoneTex.repeat.set(2, 2)
-  const stone = standardMaterial({ map: stoneTex, color: 0xc8bd9e, roughness: 0.9, metalness: 0.03 })
-  const pale = standardMaterial({ color: 0xd5c9a7, roughness: 0.82 })
-  const gold = new THREE.MeshBasicMaterial({ color: 0xf4cf91, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })
+  const stone = standardMaterial({ map: stoneTex, color: 0xb8cbe6, roughness: 0.9, metalness: 0.03 })
+  const pale = standardMaterial({ color: 0xd7e7f8, roughness: 0.82 })
+  const gold = new THREE.MeshBasicMaterial({ color: 0x9fe0ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })
 
   const temple = new THREE.Group()
   temple.position.set(cx, archiveHeight(cx, -8), -8)
@@ -156,13 +156,13 @@ export function buildArchive(w) {
   }
   w.archiveFloaters = floaters
 
-  const goldenLeaf = standardMaterial({ color: 0xd8b66c, roughness: 0.7, emissive: 0x5a3f10, emissiveIntensity: 0.7 })
+  const goldenLeaf = standardMaterial({ color: 0x9fd8ff, roughness: 0.6, emissive: 0x123a5c, emissiveIntensity: 0.7 })
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2 + 0.6
     const r = 13 + rand() * 7
     const x = cx + Math.cos(a) * r, z = Math.sin(a) * r
     const y = archiveHeight(x, z)
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.26, 2.4, 7), standardMaterial({ color: 0x695c3e, roughness: 1 }))
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.26, 2.4, 7), standardMaterial({ color: 0x3c4f6b, roughness: 1 }))
     trunk.position.set(x, y + 1.2, z)
     root.add(trunk)
     for (let j = 0; j < 3; j++) {
@@ -173,7 +173,7 @@ export function buildArchive(w) {
     }
   }
 
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0xf4cf91, transparent: true, opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x9fe0ff, transparent: true, opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })
   w.archiveRings = []
   for (let i = 0; i < 3; i++) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(9 + i * 3, 0.05, 5, 80), ringMat)
@@ -185,7 +185,7 @@ export function buildArchive(w) {
   }
 
   buildArchiveParticles(w, root)
-  buildLightShafts(root, new THREE.Vector3(cx, 0, 0), '#ffe3a0', 4, 90)
+  buildLightShafts(root, new THREE.Vector3(cx, 0, 0), '#bfeaff', 4, 90)
 }
 
 function buildArchiveParticles(w, root) {
@@ -208,7 +208,7 @@ function buildArchiveParticles(w, root) {
   geo.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1))
   geo.setAttribute('aScale', new THREE.BufferAttribute(scales, 1))
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color('#ffe3a0') }, uSize: { value: 58 }, uOpacity: { value: 0.8 } },
+    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color('#cfeaff') }, uSize: { value: 58 }, uOpacity: { value: 0.8 } },
     vertexShader: `
       attribute float aPhase; attribute float aScale; uniform float uTime; uniform float uSize; varying float vFade;
       void main(){

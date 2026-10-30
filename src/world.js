@@ -14,6 +14,7 @@ import { buildForest } from './world/forest.js'
 import { buildCave } from './world/cave.js'
 import { buildArchive } from './world/archive.js'
 import { createObelisk, createWaygate, spawnMonsters } from './world/props.js'
+import { createCompanions, updateCompanions } from './world/companions.js'
 
 const UP = new THREE.Vector3(0, 1, 0)
 const ZONE_CENTERS = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(400, 0, 0), new THREE.Vector3(800, 68, 0)]
@@ -60,8 +61,8 @@ export class World {
     this.completedCount = 0
     this.unlockedMax = 0
 
-    this.scene.fog = new THREE.FogExp2(0x5c887f, 0.0058)
-    this.scene.background = new THREE.Color('#081013')
+    this.scene.fog = new THREE.FogExp2(0x123052, 0.0075)
+    this.scene.background = new THREE.Color('#06111f')
 
     this._buildSky()
     this._buildSkyBodies()
@@ -69,6 +70,7 @@ export class World {
     buildForest(this)
     buildCave(this)
     buildArchive(this)
+    createCompanions(this)
     this._buildClouds()
     this._buildZonesShared()
     this._buildComposer()
@@ -96,13 +98,13 @@ export class World {
     const planet = new THREE.Group()
     const body = new THREE.Mesh(
       new THREE.SphereGeometry(30, 32, 24),
-      new THREE.MeshBasicMaterial({ color: 0x89aeb4, transparent: true, opacity: 0.2, fog: false, depthWrite: false })
+      new THREE.MeshBasicMaterial({ color: 0x8fb8e8, transparent: true, opacity: 0.2, fog: false, depthWrite: false })
     )
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowTexture, color: 0x9fd6ce, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }))
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowTexture, color: 0x9fd6ff, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }))
     halo.scale.set(110, 110, 1)
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(42, 64, 96),
-      new THREE.MeshBasicMaterial({ color: 0xe7dcc0, transparent: true, opacity: 0.13, side: THREE.DoubleSide, fog: false, depthWrite: false })
+      new THREE.MeshBasicMaterial({ color: 0xc9e6ff, transparent: true, opacity: 0.13, side: THREE.DoubleSide, fog: false, depthWrite: false })
     )
     ring.rotation.x = Math.PI * 0.46
     ring.rotation.z = 0.2
@@ -115,9 +117,9 @@ export class World {
   }
 
   _buildLights() {
-    this.hemi = new THREE.HemisphereLight(0x8ed8c9, 0x1d2b20, 0.72)
+    this.hemi = new THREE.HemisphereLight(0x9fd8ff, 0x081226, 0.82)
     this.scene.add(this.hemi)
-    this.sun = new THREE.DirectionalLight(0xffdda0, 2.0)
+    this.sun = new THREE.DirectionalLight(0xd8efff, 1.85)
     this.sun.castShadow = true
     const shadowSize = this.lowQuality ? 1024 : 2048
     this.sun.shadow.mapSize.set(shadowSize, shadowSize)
@@ -133,7 +135,7 @@ export class World {
     this.sunTarget = new THREE.Object3D()
     this.scene.add(this.sunTarget)
     this.sun.target = this.sunTarget
-    this.fill = new THREE.DirectionalLight(0x7ea9c8, 0.35)
+    this.fill = new THREE.DirectionalLight(0x6f9dff, 0.42)
     this.fill.position.set(-40, 30, 60)
     this.scene.add(this.fill)
   }
@@ -148,8 +150,8 @@ export class World {
       const x = rand() * 512, y = rand() * 512
       const r = 18 + rand() * 66
       const g = ctx.createRadialGradient(x, y, 0, x, y, r)
-      g.addColorStop(0, `rgba(255,244,218,${0.03 + rand() * 0.06})`)
-      g.addColorStop(1, 'rgba(255,244,218,0)')
+      g.addColorStop(0, `rgba(196,232,255,${0.03 + rand() * 0.06})`)
+      g.addColorStop(1, 'rgba(196,232,255,0)')
       ctx.fillStyle = g
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
     }
@@ -159,7 +161,7 @@ export class World {
     tex.repeat.set(2, 2)
     this.cloudLayers = []
     for (let i = 0; i < 3; i++) {
-      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.36 - i * 0.07, depthWrite: false, side: THREE.DoubleSide, color: 0xffe9c7, fog: false, blending: THREE.AdditiveBlending })
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.36 - i * 0.07, depthWrite: false, side: THREE.DoubleSide, color: 0xcfeaff, fog: false, blending: THREE.AdditiveBlending })
       const m = new THREE.Mesh(new THREE.PlaneGeometry(760, 760), mat)
       m.rotation.x = -Math.PI / 2
       m.position.set(800, 42 + i * 7, 0)
@@ -204,21 +206,21 @@ export class World {
   _buildZoneEnv() {
     this.zoneEnv = [
       {
-        top: new THREE.Color('#12333d'), horizon: new THREE.Color('#ddbb86'), sun: new THREE.Color('#ffe8bc'),
-        fog: new THREE.Color('#5c887f'), fogDensity: 0.0058, hemiSky: new THREE.Color('#8ed8c9'), hemiGround: new THREE.Color('#1d2b20'),
-        hemiIntensity: 0.72, sunColor: new THREE.Color('#ffdda0'), sunIntensity: 2.0, exposure: 0.9, stars: 0.12,
-        sunPos: new THREE.Vector3(58, 72, 24), sunDir: new THREE.Vector3(0.5, 0.45, -0.6),
+        top: new THREE.Color('#06101f'), horizon: new THREE.Color('#78b8ee'), sun: new THREE.Color('#cdefff'),
+        fog: new THREE.Color('#123052'), fogDensity: 0.0075, hemiSky: new THREE.Color('#9fd8ff'), hemiGround: new THREE.Color('#071226'),
+        hemiIntensity: 0.82, sunColor: new THREE.Color('#d8efff'), sunIntensity: 1.85, exposure: 1.02, stars: 0.3,
+        sunPos: new THREE.Vector3(52, 72, 22), sunDir: new THREE.Vector3(0.5, 0.45, -0.6),
       },
       {
-        top: new THREE.Color('#01070b'), horizon: new THREE.Color('#0b2a33'), sun: new THREE.Color('#8fe9ff'),
-        fog: new THREE.Color('#061416'), fogDensity: 0.016, hemiSky: new THREE.Color('#4ba5b5'), hemiGround: new THREE.Color('#061012'),
-        hemiIntensity: 0.38, sunColor: new THREE.Color('#7fc7d6'), sunIntensity: 0.4, exposure: 1.02, stars: 0.02,
+        top: new THREE.Color('#01070f'), horizon: new THREE.Color('#164268'), sun: new THREE.Color('#8fe9ff'),
+        fog: new THREE.Color('#071b2d'), fogDensity: 0.014, hemiSky: new THREE.Color('#4b9dc8'), hemiGround: new THREE.Color('#050d18'),
+        hemiIntensity: 0.52, sunColor: new THREE.Color('#7fcfff'), sunIntensity: 0.5, exposure: 1.04, stars: 0.06,
         sunPos: new THREE.Vector3(40, 60, 20), sunDir: new THREE.Vector3(0.2, 0.7, -0.4),
       },
       {
-        top: new THREE.Color('#101d3a'), horizon: new THREE.Color('#f2c17d'), sun: new THREE.Color('#ffe4b0'),
-        fog: new THREE.Color('#b09f80'), fogDensity: 0.004, hemiSky: new THREE.Color('#ffdfb0'), hemiGround: new THREE.Color('#3e392c'),
-        hemiIntensity: 0.9, sunColor: new THREE.Color('#ffd7a0'), sunIntensity: 2.4, exposure: 0.94, stars: 0.4,
+        top: new THREE.Color('#081329'), horizon: new THREE.Color('#a8c8ff'), sun: new THREE.Color('#e2f1ff'),
+        fog: new THREE.Color('#839fc9'), fogDensity: 0.0045, hemiSky: new THREE.Color('#cfe4ff'), hemiGround: new THREE.Color('#1b2440'),
+        hemiIntensity: 1.0, sunColor: new THREE.Color('#d8e8ff'), sunIntensity: 2.25, exposure: 0.98, stars: 0.42,
         sunPos: new THREE.Vector3(44, 76, 18), sunDir: new THREE.Vector3(0.4, 0.5, -0.55),
       },
     ]
@@ -303,11 +305,11 @@ export class World {
     const items = []
     const ob = this.zoneObelisks[this.zoneIndex]
     if (ob && !ob.userData.completed) {
-      items.push({ type: 'obelisk', label: 'Attune the Beacon', position: ob.userData.position, distance: ob.userData.position.distanceTo(playerPosition) })
+      items.push({ type: 'obelisk', label: 'Begin focus quest', position: ob.userData.position, distance: ob.userData.position.distanceTo(playerPosition) })
     }
     const gate = this.zoneGates[this.zoneIndex]
     if (gate) {
-      items.push({ type: 'gate', label: 'Open Waygate Map', position: gate.userData.position, distance: gate.userData.position.distanceTo(playerPosition) })
+      items.push({ type: 'gate', label: 'Open waygate map', position: gate.userData.position, distance: gate.userData.position.distanceTo(playerPosition) })
     }
     items.sort((a, b) => a.distance - b.distance)
     return items[0] && items[0].distance < 6.2 && Math.abs(items[0].position.y - playerPosition.y) < 6 ? items[0] : null
@@ -432,6 +434,7 @@ export class World {
       r.mesh.rotation.z += dt * r.speed
       r.mesh.rotation.y += dt * r.speed * 0.4
     })
+    updateCompanions(this, dt, t, playerPosition)
     this.archiveFloaters.forEach((f) => {
       f.mesh.position.y = f.base.y + Math.sin(t * 0.45 + f.phase) * 0.65
       f.mesh.rotation.y += dt * 0.08
