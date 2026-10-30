@@ -24,6 +24,7 @@ export class UI {
       prompt: $('prompt'),
       promptLabel: $('promptLabel'),
       interactBtn: $('interactBtn'),
+      promptKey: document.querySelector('#interactBtn .key'),
       toast: $('toast'),
       touchLayer: $('touchLayer'),
       joystick: $('joystick'),
@@ -215,6 +216,7 @@ export class UI {
 
   setTouchVisible(visible) {
     this.el.touchLayer.classList.toggle('hidden', !visible)
+    this.el.promptKey.textContent = visible ? 'Tap' : 'E'
   }
 
   showPrompt(label) {
