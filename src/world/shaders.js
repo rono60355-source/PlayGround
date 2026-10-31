@@ -2,9 +2,9 @@ import * as THREE from 'three'
 
 export const SkyShader = {
   uniforms: {
-    uTop: { value: new THREE.Color('#0a2a33') },
-    uHorizon: { value: new THREE.Color('#e8bf82') },
-    uSunColor: { value: new THREE.Color('#fff0c8') },
+    uTop: { value: new THREE.Color('#03101f') },
+    uHorizon: { value: new THREE.Color('#1d5f80') },
+    uSunColor: { value: new THREE.Color('#cdefff') },
     uSunDir: { value: new THREE.Vector3(0.5, 0.4, -0.65).normalize() },
     uTime: { value: 0 },
     uStars: { value: 0.18 },
@@ -62,9 +62,9 @@ export const SkyShader = {
 export const WaterShader = {
   uniforms: {
     uTime: { value: 0 },
-    uDeep: { value: new THREE.Color('#102f33') },
-    uShallow: { value: new THREE.Color('#7ed8c2') },
-    uSky: { value: new THREE.Color('#e7c38b') },
+    uDeep: { value: new THREE.Color('#0a2238') },
+    uShallow: { value: new THREE.Color('#6fd0f0') },
+    uSky: { value: new THREE.Color('#bfe6f5') },
     uOpacity: { value: 0.88 },
   },
   vertexShader: `
@@ -112,8 +112,8 @@ export const WaterShader = {
 export const PortalShader = {
   uniforms: {
     uTime: { value: 0 },
-    uColorA: { value: new THREE.Color('#8ff5d4') },
-    uColorB: { value: new THREE.Color('#f4cf91') },
+    uColorA: { value: new THREE.Color('#7fe6ff') },
+    uColorB: { value: new THREE.Color('#d6f7ff') },
     uOpen: { value: 0.25 },
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
@@ -154,7 +154,7 @@ export const GradeShader = {
       float d = distance(vUv, vec2(0.5));
       float v = smoothstep(0.78, 0.3, d);
       c.rgb *= mix(1.0, v, uVignette * 0.34);
-      c.rgb = mix(c.rgb, c.rgb * vec3(1.015, 1.0, 0.972), 0.4);
+      c.rgb = mix(c.rgb, c.rgb * vec3(0.972, 1.0, 1.03), 0.4);
       float luma = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
       c.rgb = mix(vec3(luma), c.rgb, 1.08);
       c.rgb = clamp((c.rgb - 0.5) * 1.045 + 0.5, 0.0, 1.0);

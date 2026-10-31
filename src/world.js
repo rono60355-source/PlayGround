@@ -4,19 +4,30 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
-import { ZONES } from './data.js'
+import { ZONES, techniqueById } from './data.js'
 import { SkyShader, GradeShader } from './world/shaders.js'
 import {
-  MONSTER_SPEED, ORBIT_RADIUS, clamp, zoneHeight, forestHeight, caveHeight, archiveHeight,
+  MONSTER_SPEED, ORBIT_RADIUS, clamp, zoneHeight,
   rng, makeGlowTexture, smoothstep,
 } from './world/util.js'
-import { buildForest } from './world/forest.js'
+import { buildMaze } from './world/maze.js'
 import { buildCave } from './world/cave.js'
 import { buildArchive } from './world/archive.js'
-import { createObelisk, createWaygate, spawnMonsters } from './world/props.js'
+import {
+  createObelisk, createWaygate, spawnMonsters, createFocusPrism,
+  updateFocusPrismLabel, createCompanion,
+} from './world/props.js'
 
 const UP = new THREE.Vector3(0, 1, 0)
 const ZONE_CENTERS = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(400, 0, 0), new THREE.Vector3(800, 68, 0)]
+export const TASK_PRISM_POSITIONS = [
+  { x: 0, z: 13 },
+  { x: 10, z: -6 },
+  { x: -12, z: 7 },
+  { x: 21, z: 15 },
+  { x: -21, z: -15 },
+  { x: 0, z: -36 },
+]
 
 export class World {
   constructor(canvas, options = {}) {
@@ -54,19 +65,22 @@ export class World {
     this.archiveRings = []
     this.crystalLights = []
     this.fireflies = []
+    this.mazeFloaters = []
+    this.prisms = []
+    this.companions = []
     this.boundaryRadius = 66
     this.raycaster = new THREE.Raycaster()
     this.glowTexture = makeGlowTexture()
     this.completedCount = 0
     this.unlockedMax = 0
 
-    this.scene.fog = new THREE.FogExp2(0x5c887f, 0.0058)
-    this.scene.background = new THREE.Color('#081013')
+    this.scene.fog = new THREE.FogExp2(0x0a2233, 0.0058)
+    this.scene.background = new THREE.Color('#04121f')
 
     this._buildSky()
     this._buildSkyBodies()
     this._buildLights()
-    buildForest(this)
+    buildMaze(this)
     buildCave(this)
     buildArchive(this)
     this._buildClouds()
@@ -96,13 +110,13 @@ export class World {
     const planet = new THREE.Group()
     const body = new THREE.Mesh(
       new THREE.SphereGeometry(30, 32, 24),
-      new THREE.MeshBasicMaterial({ color: 0x89aeb4, transparent: true, opacity: 0.2, fog: false, depthWrite: false })
+      new THREE.MeshBasicMaterial({ color: 0x6fb6d8, transparent: true, opacity: 0.2, fog: false, depthWrite: false })
     )
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowTexture, color: 0x9fd6ce, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }))
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowTexture, color: 0xa8eaff, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }))
     halo.scale.set(110, 110, 1)
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(42, 64, 96),
-      new THREE.MeshBasicMaterial({ color: 0xe7dcc0, transparent: true, opacity: 0.13, side: THREE.DoubleSide, fog: false, depthWrite: false })
+      new THREE.MeshBasicMaterial({ color: 0xc8ecff, transparent: true, opacity: 0.15, side: THREE.DoubleSide, fog: false, depthWrite: false })
     )
     ring.rotation.x = Math.PI * 0.46
     ring.rotation.z = 0.2
@@ -115,9 +129,9 @@ export class World {
   }
 
   _buildLights() {
-    this.hemi = new THREE.HemisphereLight(0x8ed8c9, 0x1d2b20, 0.72)
+    this.hemi = new THREE.HemisphereLight(0x8fd8ff, 0x0a1a2a, 0.78)
     this.scene.add(this.hemi)
-    this.sun = new THREE.DirectionalLight(0xffdda0, 2.0)
+    this.sun = new THREE.DirectionalLight(0xd6f0ff, 1.75)
     this.sun.castShadow = true
     const shadowSize = this.lowQuality ? 1024 : 2048
     this.sun.shadow.mapSize.set(shadowSize, shadowSize)
@@ -133,7 +147,7 @@ export class World {
     this.sunTarget = new THREE.Object3D()
     this.scene.add(this.sunTarget)
     this.sun.target = this.sunTarget
-    this.fill = new THREE.DirectionalLight(0x7ea9c8, 0.35)
+    this.fill = new THREE.DirectionalLight(0x6f9fd8, 0.42)
     this.fill.position.set(-40, 30, 60)
     this.scene.add(this.fill)
   }
@@ -148,8 +162,8 @@ export class World {
       const x = rand() * 512, y = rand() * 512
       const r = 18 + rand() * 66
       const g = ctx.createRadialGradient(x, y, 0, x, y, r)
-      g.addColorStop(0, `rgba(255,244,218,${0.03 + rand() * 0.06})`)
-      g.addColorStop(1, 'rgba(255,244,218,0)')
+      g.addColorStop(0, `rgba(214,247,255,${0.03 + rand() * 0.06})`)
+      g.addColorStop(1, 'rgba(214,247,255,0)')
       ctx.fillStyle = g
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
     }
@@ -159,7 +173,7 @@ export class World {
     tex.repeat.set(2, 2)
     this.cloudLayers = []
     for (let i = 0; i < 3; i++) {
-      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.36 - i * 0.07, depthWrite: false, side: THREE.DoubleSide, color: 0xffe9c7, fog: false, blending: THREE.AdditiveBlending })
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.32 - i * 0.06, depthWrite: false, side: THREE.DoubleSide, color: 0xbfe9ff, fog: false, blending: THREE.AdditiveBlending })
       const m = new THREE.Mesh(new THREE.PlaneGeometry(760, 760), mat)
       m.rotation.x = -Math.PI / 2
       m.position.set(800, 42 + i * 7, 0)
@@ -176,7 +190,7 @@ export class World {
       new THREE.Vector3(800, 0, 13),
     ]
     const obeliskPositions = [
-      new THREE.Vector3(0, 0, -12),
+      new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(400, 0, -4),
       new THREE.Vector3(800, 0, -4),
     ]
@@ -198,27 +212,34 @@ export class World {
       this.zoneObstacles[i].push({ x: gatePositions[i].x, z: gatePositions[i].z, r: 1.9 })
       spawnMonsters(this, i, root)
     }
+    TASK_PRISM_POSITIONS.forEach((position, index) => {
+      const prism = createFocusPrism(this, { title: 'Unwritten vow', techniqueName: 'Focus', accent: '#7fe6ff' }, position, index)
+      prism.visible = false
+      this.zoneRoots[0].add(prism)
+      this.prisms[index] = prism
+      this.zoneObstacles[0].push({ x: position.x, z: position.z, r: 1.5 })
+    })
     this._buildZoneEnv()
   }
 
   _buildZoneEnv() {
     this.zoneEnv = [
       {
-        top: new THREE.Color('#12333d'), horizon: new THREE.Color('#ddbb86'), sun: new THREE.Color('#ffe8bc'),
-        fog: new THREE.Color('#5c887f'), fogDensity: 0.0058, hemiSky: new THREE.Color('#8ed8c9'), hemiGround: new THREE.Color('#1d2b20'),
-        hemiIntensity: 0.72, sunColor: new THREE.Color('#ffdda0'), sunIntensity: 2.0, exposure: 0.9, stars: 0.12,
+        top: new THREE.Color('#03101f'), horizon: new THREE.Color('#1d5f80'), sun: new THREE.Color('#cdefff'),
+        fog: new THREE.Color('#0a2233'), fogDensity: 0.0062, hemiSky: new THREE.Color('#8fd8ff'), hemiGround: new THREE.Color('#0a1a2a'),
+        hemiIntensity: 0.78, sunColor: new THREE.Color('#d6f0ff'), sunIntensity: 1.75, exposure: 0.96, stars: 0.24,
         sunPos: new THREE.Vector3(58, 72, 24), sunDir: new THREE.Vector3(0.5, 0.45, -0.6),
       },
       {
-        top: new THREE.Color('#01070b'), horizon: new THREE.Color('#0b2a33'), sun: new THREE.Color('#8fe9ff'),
-        fog: new THREE.Color('#061416'), fogDensity: 0.016, hemiSky: new THREE.Color('#4ba5b5'), hemiGround: new THREE.Color('#061012'),
-        hemiIntensity: 0.38, sunColor: new THREE.Color('#7fc7d6'), sunIntensity: 0.4, exposure: 1.02, stars: 0.02,
+        top: new THREE.Color('#01060e'), horizon: new THREE.Color('#0a2a44'), sun: new THREE.Color('#8fe9ff'),
+        fog: new THREE.Color('#061624'), fogDensity: 0.016, hemiSky: new THREE.Color('#4ba5d5'), hemiGround: new THREE.Color('#06101a'),
+        hemiIntensity: 0.42, sunColor: new THREE.Color('#7fc7e6'), sunIntensity: 0.5, exposure: 1.04, stars: 0.02,
         sunPos: new THREE.Vector3(40, 60, 20), sunDir: new THREE.Vector3(0.2, 0.7, -0.4),
       },
       {
-        top: new THREE.Color('#101d3a'), horizon: new THREE.Color('#f2c17d'), sun: new THREE.Color('#ffe4b0'),
-        fog: new THREE.Color('#b09f80'), fogDensity: 0.004, hemiSky: new THREE.Color('#ffdfb0'), hemiGround: new THREE.Color('#3e392c'),
-        hemiIntensity: 0.9, sunColor: new THREE.Color('#ffd7a0'), sunIntensity: 2.4, exposure: 0.94, stars: 0.4,
+        top: new THREE.Color('#0a1b33'), horizon: new THREE.Color('#bfe6f5'), sun: new THREE.Color('#eafaff'),
+        fog: new THREE.Color('#8fb8c8'), fogDensity: 0.0042, hemiSky: new THREE.Color('#cdefff'), hemiGround: new THREE.Color('#2c4a5e'),
+        hemiIntensity: 0.92, sunColor: new THREE.Color('#d6f0ff'), sunIntensity: 2.15, exposure: 0.98, stars: 0.35,
         sunPos: new THREE.Vector3(44, 76, 18), sunDir: new THREE.Vector3(0.4, 0.5, -0.55),
       },
     ]
@@ -301,9 +322,17 @@ export class World {
 
   getNearestInteractable(playerPosition) {
     const items = []
-    const ob = this.zoneObelisks[this.zoneIndex]
-    if (ob && !ob.userData.completed) {
-      items.push({ type: 'obelisk', label: 'Attune the Beacon', position: ob.userData.position, distance: ob.userData.position.distanceTo(playerPosition) })
+    if (this.zoneIndex === 0) {
+      this.prisms.forEach((prism, index) => {
+        if (!prism.visible || prism.userData.completed) return
+        items.push({
+          type: 'prism',
+          taskIndex: index,
+          label: prism.userData.failed ? 'Retry the fractured vow' : 'Begin the focus ritual',
+          position: prism.userData.position,
+          distance: prism.userData.position.distanceTo(playerPosition),
+        })
+      })
     }
     const gate = this.zoneGates[this.zoneIndex]
     if (gate) {
@@ -329,6 +358,43 @@ export class World {
       gate.userData.locked = !open
       gate.userData.portalMat.uniforms.uOpen.value = open ? 0.92 : 0.18
     }
+  }
+
+  setTasks(tasks) {
+    this.prisms.forEach((prism, index) => {
+      const task = tasks[index]
+      if (!task) {
+        prism.visible = false
+        return
+      }
+      prism.visible = true
+      const done = task.status === 'done'
+      const failed = task.status === 'failed'
+      prism.userData.completed = done
+      prism.userData.failed = failed
+      prism.userData.beamMat.uniforms.uOpacity.value = done ? 0.16 : failed ? 0.36 : 0.9
+      prism.userData.cage.material.opacity = done ? 0.12 : 0.32
+      prism.userData.crystal.material.emissiveIntensity = done ? 0.5 : failed ? 0.9 : 1.7
+      prism.userData.light.intensity = done ? 1.2 : failed ? 2.2 : 6
+      prism.userData.label.material.opacity = done ? 0.35 : 0.94
+      const tech = techniqueById(task.technique)
+      updateFocusPrismLabel(prism, task.title, done ? 'Kept' : failed ? 'Fractured' : tech.name, tech.accent)
+    })
+  }
+
+  getFocusPrismPosition(index) {
+    return this.prisms[index]?.userData.position || new THREE.Vector3()
+  }
+
+  setFriends(friends) {
+    for (const companion of this.companions) {
+      this.scene.remove(companion)
+    }
+    this.companions = friends.map((friend, index) => {
+      const companion = createCompanion(this, friend, index)
+      this.scene.add(companion)
+      return companion
+    })
   }
 
   buildAimRaycaster(x = 0, y = 0) {
@@ -416,7 +482,7 @@ export class World {
     this.skyMaterial.uniforms.uTime.value = t
     if (this.waterMaterial) this.waterMaterial.uniforms.uTime.value = t
     for (const shader of this.grassShaders) shader.uniforms.uTime.value = t
-    if (this.forestMotes) this.forestMotes.uniforms.uTime.value = t
+    if (this.mazeMotes) this.mazeMotes.uniforms.uTime.value = t
     if (this.caveMotes) this.caveMotes.uniforms.uTime.value = t
     if (this.archiveMotes) this.archiveMotes.uniforms.uTime.value = t
 
@@ -428,6 +494,41 @@ export class World {
     })
     if (this.heroLight) this.heroLight.intensity = 12 + Math.sin(t * 0.8) * 2
     this.crystalLights.forEach((c) => { c.light.intensity = c.base + Math.sin(t * 1.1 + c.phase) * 2.2 })
+    this.mazeFloaters.forEach((f) => {
+      f.mesh.position.y = f.base.y + Math.sin(t * 0.4 + f.phase) * 0.7
+      f.mesh.rotation.y += dt * f.speed
+      f.mesh.rotation.x = Math.sin(t * 0.3 + f.phase) * 0.25
+    })
+    this.prisms.forEach((prism, index) => {
+      if (!prism.visible) return
+      prism.userData.crystal.rotation.y += dt * 0.6
+      prism.userData.crystal.position.y = 2.5 + Math.sin(t * 1.1 + index) * 0.12
+      prism.userData.cage.rotation.y -= dt * 0.25
+      prism.userData.ring.rotation.z += dt * 0.4
+      prism.userData.ring2.rotation.y -= dt * 0.5
+      prism.userData.beamMat.uniforms.uTime.value = t
+      prism.userData.label.position.y = 4.6 + Math.sin(t * 0.9 + index) * 0.09
+    })
+    this.companions.forEach((companion, index) => {
+      const phase = t * 0.9 + companion.userData.phase
+      const forward = new THREE.Vector3()
+      camera.getWorldDirection(forward)
+      forward.y = 0
+      if (forward.lengthSq() < 0.001) forward.set(0, 0, -1)
+      forward.normalize()
+      const right = new THREE.Vector3(-forward.z, 0, forward.x)
+      const offset = (index - (this.companions.length - 1) / 2) * 1.35
+      const targetX = playerPosition.x - forward.x * 2.4 + right.x * offset
+      const targetZ = playerPosition.z - forward.z * 2.4 + right.z * offset
+      const targetY = this.heightAt(targetX, targetZ) + 1.55 + Math.sin(phase) * 0.18
+      const smooth = Math.min(1, dt * 3.2)
+      companion.position.x += (targetX - companion.position.x) * smooth
+      companion.position.z += (targetZ - companion.position.z) * smooth
+      companion.position.y += (targetY - companion.position.y) * Math.min(1, dt * 5)
+      companion.userData.core.rotation.y += dt * 0.9
+      companion.userData.core.rotation.x += dt * 0.35
+      companion.userData.glow.material.opacity = 0.24 + Math.sin(phase * 1.4) * 0.08
+    })
     this.archiveRings.forEach((r) => {
       r.mesh.rotation.z += dt * r.speed
       r.mesh.rotation.y += dt * r.speed * 0.4

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { ZONES } from '../data.js'
 import {
-  zoneHeight, makeStoneTexture, makeRuneTexture, standardMaterial, beamMaterial, rng, MONSTER_SPEED,
+  zoneHeight, makeStoneTexture, makeRuneTexture, makeLabelTexture, standardMaterial, beamMaterial, rng, MONSTER_SPEED,
 } from './util.js'
 import { PortalShader } from './shaders.js'
 
@@ -12,7 +12,7 @@ export function createObelisk(w, zone, position, index) {
   group.userData.zone = index
   const stoneTex = makeStoneTexture(index === 1)
   stoneTex.repeat.set(1, 2)
-  const stone = standardMaterial({ map: stoneTex, color: index === 2 ? 0xcfc19b : 0x959986, roughness: 0.9 })
+  const stone = standardMaterial({ map: stoneTex, color: index === 2 ? 0xc2dbe6 : 0x8fb8c8, roughness: 0.72, metalness: 0.14 })
   const accent = new THREE.Color(zone.accent)
   const glow = new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
   const crystalMat = standardMaterial({ color: accent, emissive: accent, emissiveIntensity: 1.25, roughness: 0.2, metalness: 0.1 })
@@ -91,7 +91,7 @@ export function createWaygate(w, zone, position, index) {
   group.position.set(position.x, worldY, position.z)
   group.userData.zone = index
   const stoneTex = makeStoneTexture(index === 1)
-  const stone = standardMaterial({ map: stoneTex, color: index === 2 ? 0xc9bb96 : 0x8f9486, roughness: 0.92 })
+  const stone = standardMaterial({ map: stoneTex, color: index === 2 ? 0xc2dbe6 : 0x8aaec2, roughness: 0.78, metalness: 0.12 })
   const gold = new THREE.MeshBasicMaterial({ color: zone.accent, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false })
 
   for (const s of [-1, 1]) {
@@ -124,7 +124,7 @@ export function createWaygate(w, zone, position, index) {
   }
   const portalUniforms = THREE.UniformsUtils.clone(PortalShader.uniforms)
   portalUniforms.uColorA.value = new THREE.Color(zone.accent)
-  portalUniforms.uColorB.value = new THREE.Color(index === 2 ? '#f4cf91' : '#ffffff')
+  portalUniforms.uColorB.value = new THREE.Color(index === 2 ? '#d6f7ff' : '#ffffff')
   const portalMat = new THREE.ShaderMaterial({
     uniforms: portalUniforms,
     vertexShader: PortalShader.vertexShader,
@@ -155,8 +155,8 @@ export function spawnMonsters(w, zoneIndex, root) {
     2: [[812, -3], [788, -2], [810, 18], [790, 20]],
   }[zoneIndex]
   const colors = zoneIndex === 0
-    ? ['#7ff5d4', '#b8a4ff', '#f4cf91']
-    : zoneIndex === 1 ? ['#79dcff', '#b18cff', '#ff9ad5'] : ['#ffe0a0', '#b9d8ff', '#ffc38a']
+    ? ['#7fe6ff', '#8fb4ff', '#b8a4ff']
+    : zoneIndex === 1 ? ['#79dcff', '#8fa8ff', '#c0a4ff'] : ['#b9f0ff', '#a8d8ff', '#d6f7ff']
   positions.forEach(([x, z], i) => {
     const group = new THREE.Group()
     const baseY = zoneHeight(zoneIndex, x, z)
@@ -193,4 +193,121 @@ export function spawnMonsters(w, zoneIndex, root) {
     hit.userData.monsterRef = monster
     w.monsters.push(monster)
   })
+}
+
+// A focus prism is the in-world body of one vow. It replaces the old quiz obelisk.
+export function createFocusPrism(w, task, position, index) {
+  const group = new THREE.Group()
+  const worldY = zoneHeight(0, position.x, position.z)
+  group.position.set(position.x, worldY, position.z)
+  group.userData.index = index
+  const accent = new THREE.Color(task.accent || '#7fe6ff')
+  const stoneTex = makeStoneTexture(false)
+  stoneTex.repeat.set(1, 1)
+  const stone = standardMaterial({ map: stoneTex, color: 0x8fb8c8, roughness: 0.5, metalness: 0.24 })
+  const glow = new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false })
+  const crystalMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 1.6, roughness: 0.12, metalness: 0.3 })
+
+  for (let i = 0; i < 3; i++) {
+    const tier = new THREE.Mesh(new THREE.CylinderGeometry(1.55 - i * 0.3, 1.75 - i * 0.3, 0.28, 6), stone)
+    tier.position.y = 0.14 + i * 0.26
+    tier.rotation.y = i * 0.16
+    tier.castShadow = true
+    tier.receiveShadow = true
+    group.add(tier)
+  }
+
+  const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.62, 1), crystalMat)
+  crystal.position.y = 2.5
+  crystal.scale.y = 1.7
+  crystal.castShadow = true
+  group.add(crystal)
+
+  const cage = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.05, 1),
+    new THREE.MeshBasicMaterial({ color: accent, wireframe: true, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false })
+  )
+  cage.position.y = 2.5
+  group.add(cage)
+
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.24, 0.022, 5, 54), glow)
+  ring.position.y = 2.5
+  ring.rotation.x = Math.PI / 2.2
+  group.add(ring)
+  const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.016, 5, 44), glow)
+  ring2.position.y = 2.5
+  ring2.rotation.x = Math.PI / 2
+  ring2.rotation.y = 0.8
+  group.add(ring2)
+
+  const beamMat = beamMaterial(task.accent || '#7fe6ff')
+  beamMat.uniforms.uOpacity.value = 0.8
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.72, 26, 14, 1, true), beamMat)
+  beam.position.y = 15.5
+  beam.renderOrder = 3
+  group.add(beam)
+
+  const label = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: makeLabelTexture(task.title, task.techniqueName || 'Focus', task.accent || '#7fe6ff'),
+    transparent: true,
+    opacity: 0.94,
+    depthWrite: false,
+    depthTest: false,
+  }))
+  label.position.y = 4.6
+  label.scale.set(5.2, 1.95, 1)
+  label.renderOrder = 6
+  group.add(label)
+
+  const light = new THREE.PointLight(accent, 6, 17, 2)
+  light.position.y = 2.7
+  group.add(light)
+
+  group.userData.taskIndex = index
+  group.userData.crystal = crystal
+  group.userData.cage = cage
+  group.userData.ring = ring
+  group.userData.ring2 = ring2
+  group.userData.beamMat = beamMat
+  group.userData.label = label
+  group.userData.light = light
+  group.userData.accent = accent
+  group.userData.position = new THREE.Vector3(position.x, worldY + 1.5, position.z)
+  group.userData.completed = false
+  group.userData.failed = false
+  return group
+}
+
+export function updateFocusPrismLabel(prism, title, techniqueName, accent) {
+  const label = prism.userData.label
+  if (!label) return
+  const map = makeLabelTexture(title, techniqueName, accent)
+  const old = label.material.map
+  label.material.map = map
+  label.material.needsUpdate = true
+  if (old) old.dispose()
+}
+
+export function createCompanion(w, friend, index) {
+  const group = new THREE.Group()
+  const color = new THREE.Color(friend.color)
+  const core = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.24, 1),
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.8, roughness: 0.12, metalness: 0.4 })
+  )
+  core.scale.y = 1.4
+  group.add(core)
+  const ringMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false })
+  for (let i = 0; i < 2; i++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.4 + i * 0.12, 0.012, 5, 40), ringMat)
+    ring.rotation.set(1.1 + i * 0.5, i * 0.8, i * 0.4)
+    group.add(ring)
+  }
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: w.glowTexture, color, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false }))
+  glow.scale.set(2.2, 2.2, 1)
+  group.add(glow)
+  const light = new THREE.PointLight(color, 1.1, 6, 2)
+  group.add(light)
+  group.userData = { friend, index, core, ringMat, glow, light, phase: index * 2.1 }
+  return group
 }

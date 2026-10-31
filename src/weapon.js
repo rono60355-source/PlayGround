@@ -13,8 +13,8 @@ export class Weapon {
     this.charges = 0
 
     const dark = new THREE.MeshStandardMaterial({ color: 0x1a2425, roughness: 0.34, metalness: 0.72 })
-    const accent = new THREE.MeshStandardMaterial({ color: 0x8ff5d4, emissive: 0x36cfa8, emissiveIntensity: 1.2, roughness: 0.18, metalness: 0.35 })
-    const faint = new THREE.MeshBasicMaterial({ color: 0x8ff5d4, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })
+    const accent = new THREE.MeshStandardMaterial({ color: 0x7fe6ff, emissive: 0x2a9dcc, emissiveIntensity: 1.2, roughness: 0.18, metalness: 0.35 })
+    const faint = new THREE.MeshBasicMaterial({ color: 0x7fe6ff, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })
 
     const housing = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.042, 10, 36, Math.PI * 1.45), dark)
     housing.rotation.set(0.6, 0.2, -0.35)
@@ -31,7 +31,7 @@ export class Weapon {
     this.core.position.set(0.01, 0.015, -0.02)
     this.core.scale.y = 1.6
     this.group.add(this.core)
-    this.cage = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 1), new THREE.MeshBasicMaterial({ color: 0x8ff5d4, wireframe: true, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false }))
+    this.cage = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 1), new THREE.MeshBasicMaterial({ color: 0x7fe6ff, wireframe: true, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false }))
     this.cage.position.copy(this.core.position)
     this.group.add(this.cage)
     this.ring = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.006, 5, 44), faint)
@@ -53,7 +53,7 @@ export class Weapon {
       this.shards.push(shard)
     }
 
-    this.light = new THREE.PointLight(0x8ff5d4, 0.7, 2.6, 2)
+    this.light = new THREE.PointLight(0x7fe6ff, 0.7, 2.6, 2)
     this.light.position.set(0, 0.05, 0.1)
     this.group.add(this.light)
 
@@ -61,7 +61,7 @@ export class Weapon {
     this.muzzle.position.set(0.01, 0.02, -0.17)
     this.group.add(this.muzzle)
 
-    this.flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: 0xbaffea, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }))
+    this.flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture, color: 0xd6f7ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }))
     this.flash.position.set(0.01, 0.02, -0.24)
     this.flash.scale.set(0.9, 0.9, 1)
     this.group.add(this.flash)

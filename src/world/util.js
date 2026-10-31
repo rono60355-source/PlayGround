@@ -40,16 +40,12 @@ export function rng(seed) {
   }
 }
 
-export function forestHeight(x, z) {
+export function mazeHeight(x, z) {
   const r = Math.hypot(x, z)
-  let h = fbm(x * 0.019, z * 0.019, 5) * 4.6 + fbm(x * 0.062 + 4, z * 0.062 - 8, 3) * 0.78
-  h += smoothstep(55, 90, r) * (16 + fbm(x * 0.032, z * 0.032, 3) * 12)
-  const glade = smoothstep(9, 31, Math.hypot(x, z - 4))
-  h = lerp(0.38, h, glade)
-  const pond = Math.hypot(x + 22, z - 40)
-  h -= (1 - smoothstep(4.5, 13, pond)) * 2.7
-  const hero = Math.hypot(x, z + 25)
-  h = lerp(h, 0.55, (1 - smoothstep(3, 14, hero)) * 0.7)
+  let h = fbm(x * 0.024, z * 0.024, 4) * 1.15 + fbm(x * 0.075 + 4, z * 0.075 - 8, 3) * 0.26
+  h += smoothstep(52, 78, r) * (10 + fbm(x * 0.03, z * 0.03, 3) * 7)
+  const heart = smoothstep(6, 30, r)
+  h = lerp(0.14, h, heart)
   return h
 }
 
@@ -68,7 +64,7 @@ export function archiveHeight(x, z) {
 export function zoneHeight(index, x, z) {
   if (index === 1) return caveHeight(x, z)
   if (index === 2) return archiveHeight(x, z)
-  return forestHeight(x, z)
+  return mazeHeight(x, z)
 }
 
 export function makeGlowTexture() {
@@ -77,9 +73,9 @@ export function makeGlowTexture() {
   const ctx = c.getContext('2d')
   const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
   g.addColorStop(0, 'rgba(255,255,255,1)')
-  g.addColorStop(0.15, 'rgba(210,255,242,0.9)')
-  g.addColorStop(0.45, 'rgba(120,230,205,0.22)')
-  g.addColorStop(1, 'rgba(60,160,150,0)')
+  g.addColorStop(0.15, 'rgba(214,247,255,0.9)')
+  g.addColorStop(0.45, 'rgba(112,214,255,0.24)')
+  g.addColorStop(1, 'rgba(48,132,210,0)')
   ctx.fillStyle = g
   ctx.fillRect(0, 0, 128, 128)
   const tex = new THREE.CanvasTexture(c)
@@ -92,18 +88,18 @@ export function makeStoneTexture(dark = false) {
   const c = document.createElement('canvas')
   c.width = c.height = size
   const ctx = c.getContext('2d')
-  const base = dark ? '#232a2b' : '#8d8a7d'
+  const base = dark ? '#1a2b3c' : '#7f95a8'
   ctx.fillStyle = base
   ctx.fillRect(0, 0, size, size)
   const rand = rng(dark ? 91 : 44)
   for (let i = 0; i < 2600; i++) {
     const x = rand() * size, y = rand() * size, r = 1 + rand() * 18
-    const tone = Math.floor((dark ? 24 : 100) + rand() * (dark ? 32 : 65))
-    ctx.fillStyle = `rgba(${tone},${tone + (dark ? 4 : 2)},${tone - (dark ? 0 : 6)},${0.02 + rand() * 0.05})`
+    const tone = Math.floor((dark ? 20 : 92) + rand() * (dark ? 34 : 70))
+    ctx.fillStyle = `rgba(${tone - (dark ? 4 : 8)},${tone + (dark ? 10 : 6)},${tone + (dark ? 24 : 22)},${0.02 + rand() * 0.05})`
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
   }
   for (let i = 0; i < 18; i++) {
-    ctx.strokeStyle = dark ? 'rgba(8,13,14,0.25)' : 'rgba(53,50,43,0.18)'
+    ctx.strokeStyle = dark ? 'rgba(5,12,20,0.3)' : 'rgba(32,54,72,0.2)'
     ctx.lineWidth = 0.6 + rand() * 1.4
     ctx.beginPath()
     let x = rand() * size, y = rand() * size
@@ -115,6 +111,49 @@ export function makeStoneTexture(dark = false) {
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.colorSpace = THREE.SRGBColorSpace
   tex.anisotropy = 4
+  return tex
+}
+
+export function makeLabelTexture(title, subtitle, accent = '#7fe6ff') {
+  const w = 512
+  const h = 192
+  const c = document.createElement('canvas')
+  c.width = w
+  c.height = h
+  const ctx = c.getContext('2d')
+  ctx.clearRect(0, 0, w, h)
+  ctx.fillStyle = 'rgba(4, 14, 26, 0.66)'
+  ctx.strokeStyle = accent
+  ctx.lineWidth = 2
+  const pad = 22
+  const radius = 18
+  ctx.beginPath()
+  ctx.moveTo(pad + radius, pad)
+  ctx.lineTo(w - pad - radius, pad)
+  ctx.quadraticCurveTo(w - pad, pad, w - pad, pad + radius)
+  ctx.lineTo(w - pad, h - pad - radius)
+  ctx.quadraticCurveTo(w - pad, h - pad, w - pad - radius, h - pad)
+  ctx.lineTo(pad + radius, h - pad)
+  ctx.quadraticCurveTo(pad, h - pad, pad, h - pad - radius)
+  ctx.lineTo(pad, pad + radius)
+  ctx.quadraticCurveTo(pad, pad, pad + radius, pad)
+  ctx.closePath()
+  ctx.fill()
+  ctx.stroke()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = accent
+  ctx.font = '600 20px "Avenir Next", Avenir, Segoe UI, system-ui, sans-serif'
+  ctx.fillText(subtitle.toUpperCase().slice(0, 44), w / 2, 56)
+  ctx.fillStyle = '#eafaff'
+  ctx.font = '600 34px "Cormorant Garamond", Georgia, serif'
+  const line = title.length > 26 ? `${title.slice(0, 25)}…` : title
+  ctx.fillText(line, w / 2, 108)
+  ctx.fillStyle = 'rgba(200, 238, 255, 0.62)'
+  ctx.font = '500 17px "Avenir Next", Avenir, Segoe UI, system-ui, sans-serif'
+  ctx.fillText('FOCUS HERE · E', w / 2, 148)
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
   return tex
 }
 

@@ -14,9 +14,9 @@ export function buildCave(w) {
   floorGeo.rotateX(-Math.PI / 2)
   const pos = floorGeo.attributes.position
   const colors = []
-  const cA = new THREE.Color('#1b2c2e')
-  const cB = new THREE.Color('#263d40')
-  const cC = new THREE.Color('#152224')
+  const cA = new THREE.Color('#0f2438')
+  const cB = new THREE.Color('#1b3d58')
+  const cC = new THREE.Color('#0a1828')
   const tmp = new THREE.Color()
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i) + cx, z = pos.getZ(i)
@@ -42,13 +42,13 @@ export function buildCave(w) {
     dpos.setXYZ(i, v.x, v.y, v.z)
   }
   domeGeo.computeVertexNormals()
-  const dome = new THREE.Mesh(domeGeo, standardMaterial({ color: 0x263234, roughness: 1, side: THREE.BackSide }))
+  const dome = new THREE.Mesh(domeGeo, standardMaterial({ color: 0x1a3348, roughness: 1, side: THREE.BackSide }))
   dome.position.set(cx, -1.5, 0)
   root.add(dome)
 
   const rand = rng(661)
   const rockGeo = rockGeometry(1.8)
-  const rockMat = standardMaterial({ color: 0x3b4749, roughness: 1 })
+  const rockMat = standardMaterial({ color: 0x2a4058, roughness: 1 })
   for (let i = 0; i < 36; i++) {
     const a = (i / 36) * Math.PI * 2 + rand() * 0.09
     const r = 23 + rand() * 7
@@ -63,7 +63,7 @@ export function buildCave(w) {
   }
 
   const crystalGeo = new THREE.ConeGeometry(0.6, 3.8, 6)
-  const crystalColors = [0x69e2ff, 0xb18cff, 0xffc879]
+  const crystalColors = [0x69d8ff, 0x8fa8ff, 0xb8a4ff]
   const crystalLights = []
   for (let i = 0; i < 16; i++) {
     const a = rand() * Math.PI * 2
@@ -94,7 +94,7 @@ export function buildCave(w) {
   }
   w.crystalLights = crystalLights
 
-  const stalactiteMat = standardMaterial({ color: 0x364345, roughness: 1 })
+  const stalactiteMat = standardMaterial({ color: 0x243a50, roughness: 1 })
   for (let i = 0; i < 28; i++) {
     const a = rand() * Math.PI * 2
     const r = 3 + rand() * 22
@@ -109,7 +109,7 @@ export function buildCave(w) {
 
   const poolGeo = new THREE.CircleGeometry(4.4, 56)
   poolGeo.rotateX(-Math.PI / 2)
-  const poolMat = new THREE.MeshBasicMaterial({ color: 0x57d9d7, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false })
+  const poolMat = new THREE.MeshBasicMaterial({ color: 0x5fc8ff, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false })
   for (const [px, pz] of [[cx - 9, 8], [cx + 11, -7], [cx + 4, 13]]) {
     const pool = new THREE.Mesh(poolGeo, poolMat)
     pool.position.set(px, caveHeight(px, pz) + 0.02, pz)
